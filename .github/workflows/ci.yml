@@ -40,9 +40,4 @@ jobs:
 
       # Lancer les migrations
       - name: Run Flyway migrations
-        run: flyway \
-          -url=jdbc:mysql://localhost:3306/poc_liq \
-          -user=root \
-          -password=root \
-          -locations=filesystem:./sql \
-          migrate
+        run: flyway -url=jdbc:mysql://localhost:3306/poc_liq -user=root -password=root -locations=filesystem:./sql migrate
