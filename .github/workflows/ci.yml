@@ -1,0 +1,31 @@
+name: CI & Flyway Migration
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Récupération du code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Installer Java (si ton projet est Java, sinon on met Node/Python)
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Lancer Flyway (via Docker)
+      - name: Run Flyway migrations
+        uses: docker://flyway/flyway:latest
+        with:
+          args: >
+            -url=jdbc:mysql://${{ secrets.DB_HOST }}:3306/${{ secrets.DB_NAME }}
+            -user=${{ secrets.DB_USER }}
+            -password=${{ secrets.DB_PASSWORD }}
+            -locations=filesystem:./sql migrate
