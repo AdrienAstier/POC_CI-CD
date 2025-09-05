@@ -2,7 +2,8 @@ name: CI & Flyway Migration
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   build:
@@ -23,16 +24,16 @@ jobs:
           --health-retries=5
 
     steps:
-      # Récupération du code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Lancer les migrations Flyway avec l'action officielle
       - name: Run Flyway migrations
-        uses: devatherock/flyway-action@v3
-        with:
-          url: jdbc:mysql://mysql:3306/poc_liq
-          user: root
-          password: root
-          locations: filesystem:./sql
-          command: migrate
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/sql:/flyway/sql \
+            flyway/flyway:latest \
+            -url=jdbc:mysql://mysql:3306/poc_liq \
+            -user=root \
+            -password=root \
+            -locations=filesystem:/flyway/sql \
+            migrate
