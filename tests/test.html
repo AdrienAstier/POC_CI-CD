@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tests - Calculatrice Simple</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .test {
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 5px;
+        }
+        .test.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .test.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .summary {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tests de la Calculatrice</h1>
+    <div id="test-results"></div>
+    <div id="summary" class="summary"></div>
+    
+    <script src="../script.js"></script>
+    <script>
+        // Framework de test simple
+        class SimpleTest {
+            constructor() {
+                this.tests = [];
+                this.passed = 0;
+                this.failed = 0;
+            }
+            
+            test(description, testFunction) {
+                try {
+                    testFunction();
+                    this.addResult(description, true, null);
+                    this.passed++;
+                } catch (error) {
+                    this.addResult(description, false, error.message);
+                    this.failed++;
+                }
+            }
+            
+            expect(actual) {
+                return {
+                    toBe: (expected) => {
+                        if (actual !== expected) {
+                            throw new Error(`Attendu: ${expected}, Reçu: ${actual}`);
+                        }
+                    },
+                    toThrow: () => {
+                        if (typeof actual !== 'function') {
+                            throw new Error('toThrow() ne peut être utilisé qu\'avec une fonction');
+                        }
+                        try {
+                            actual();
+                            throw new Error('La fonction aurait dû lever une exception');
+                        } catch (e) {
+                            // C'est ce qu'on attendait
+                        }
+                    }
+                };
+            }
+            
+            addResult(description, passed, error) {
+                const resultsDiv = document.getElementById('test-results');
+                const testDiv = document.createElement('div');
+                testDiv.className = `test ${passed ? 'pass' : 'fail'}`;
+                testDiv.innerHTML = `
+                    <strong>${passed ? '✅' : '❌'} ${description}</strong>
+                    ${error ? `<br>Erreur: ${error}` : ''}
+                `;
+                resultsDiv.appendChild(testDiv);
+            }
+            
+            run() {
+                this.runTests();
+                this.showSummary();
+            }
+            
+            runTests() {
+                // Tests d'addition
+                this.test('Addition de nombres positifs', () => {
+                    this.expect(add(2, 3)).toBe(5);
+                });
+                
+                this.test('Addition avec zéro', () => {
+                    this.expect(add(5, 0)).toBe(5);
+                });
+                
+                this.test('Addition de nombres négatifs', () => {
+                    this.expect(add(-2, -3)).toBe(-5);
+                });
+                
+                // Tests de soustraction
+                this.test('Soustraction simple', () => {
+                    this.expect(subtract(5, 3)).toBe(2);
+                });
+                
+                this.test('Soustraction avec résultat négatif', () => {
+                    this.expect(subtract(3, 5)).toBe(-2);
+                });
+                
+                // Tests de multiplication
+                this.test('Multiplication simple', () => {
+                    this.expect(multiply(3, 4)).toBe(12);
+                });
+                
+                this.test('Multiplication par zéro', () => {
+                    this.expect(multiply(5, 0)).toBe(0);
+                });
+                
+                // Tests de division
+                this.test('Division simple', () => {
+                    this.expect(divide(10, 2)).toBe(5);
+                });
+                
+                this.test('Division par zéro doit lever une erreur', () => {
+                    this.expect(() => divide(10, 0)).toThrow();
+                });
+            }
+            
+            showSummary() {
+                const summaryDiv = document.getElementById('summary');
+                const total = this.passed + this.failed;
+                const isSuccess = this.failed === 0;
+                
+                summaryDiv.className = `summary ${isSuccess ? 'pass' : 'fail'}`;
+                summaryDiv.innerHTML = `
+                    <strong>Résumé des tests:</strong><br>
+                    Total: ${total} | Réussis: ${this.passed} | Échoués: ${this.failed}
+                    ${isSuccess ? '<br>🎉 Tous les tests sont passés !' : '<br>❌ Certains tests ont échoué'}
+                `;
+                
+                // Pour GitHub Actions
+                if (this.failed > 0) {
+                    console.error(`Tests échoués: ${this.failed}/${total}`);
+                    window.testsFailed = true;
+                } else {
+                    console.log(`Tous les tests réussis: ${this.passed}/${total}`);
+                    window.testsFailed = false;
+                }
+            }
+        }
+        
+        // Lancer les tests au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            const testRunner = new SimpleTest();
+            testRunner.run();
+        });
+    </script>
+</body>
+</html>

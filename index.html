@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculatrice Simple</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Calculatrice Simple</h1>
+        <div class="calculator">
+            <input type="number" id="num1" placeholder="Premier nombre">
+            <select id="operation">
+                <option value="add">+</option>
+                <option value="subtract">-</option>
+                <option value="multiply">×</option>
+                <option value="divide">÷</option>
+            </select>
+            <input type="number" id="num2" placeholder="Deuxième nombre">
+            <button onclick="calculate()">Calculer</button>
+            <div id="result" class="result"></div>
+        </div>
+        <div class="info">
+            <p>Version: <span id="version">1.0.0</span></p>
+            <p>Dernière mise à jour: <span id="build-date"></span></p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+name: Build et Deploy
+
+# Déclencheurs
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+# Jobs
+jobs:
+  # Job 1: Tests
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+    
+    - name: Exécution des tests
+      run: |
+        echo "🧪 Lancement des tests..."
+        
+        # Vérifier que les fichiers existent
+        if [ ! -f "index.html" ]; then
+          echo "❌ Fichier index.html manquant"
+          exit 1
+        fi
+        
+        if [ ! -f "script.js" ]; then
+          echo "❌ Fichier script.js manquant"
+          exit 1
+        fi
+        
+        if [ ! -f "style.css" ]; then
+          echo "❌ Fichier style.css manquant"
+          exit 1
+        fi
+        
+        echo "✅ Tous les fichiers sont présents"
+        
+        # Vérifier la syntaxe HTML
+        echo "🔍 Vérification HTML..."
+        if grep -q "<!DOCTYPE html>" index.html; then
+          echo "✅ DOCTYPE HTML trouvé"
+        else
+          echo "❌ DOCTYPE HTML manquant"
+          exit 1
+        fi
+        
+        # Vérifier la syntaxe JavaScript
+        echo "🔍 Vérification JavaScript..."
+        if grep -q "function calculate" script.js; then
+          echo "✅ Fonction calculate trouvée"
+        else
+          echo "❌ Fonction calculate manquante"
+          exit 1
+        fi
+        
+        echo "🎉 Tous les tests sont passés!"
+
+  # Job 2: Build
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+    
+    - name: Mise à jour de la date de build
+      run: |
+        echo "📅 Mise à jour de la date de build..."
+        sed -i "s/new Date().toLocaleDateString('fr-FR')/\"$(date +'%d\/%m\/%Y à %H:%M')\"/g" script.js
+        echo "Version: $(date +'%Y%m%d-%H%M%S')" > version.txt
+    
+    - name: Création de l'artefact
+      uses: actions/upload-artifact@v4
+      with:
+        name: site-web
+        path: |
+          index.html
+          style.css
+          script.js
+          version.txt
+          README.md
+
+  # Job 3: Deploy sur GitHub Pages
+  deploy:
+    name: Déploiement
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    # Permissions pour GitHub Pages
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    # Environment de déploiement
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+    
+    - name: Téléchargement de l'artefact
+      uses: actions/download-artifact@v4
+      with:
+        name: site-web
+        path: ./dist
+    
+    - name: Configuration GitHub Pages
+      uses: actions/configure-pages@v4
+    
+    - name: Upload vers GitHub Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./dist
+    
+    - name: Déploiement sur GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+    
+    - name: Notification de succès
+      run: |
+        echo "🚀 Déploiement terminé!"
+        echo "🌐 Site disponible à: ${{ steps.deployment.outputs.page_url }}"
+
+  # Job 4: Notification
+  notify:
+    name: Notification
+    runs-on: ubuntu-latest
+    needs: [test, build, deploy]
+    if: always()
+    
+    steps:
+    - name: Statut de la pipeline
+      run: |
+        if [ "${{ needs.test.result }}" == "success" ] && [ "${{ needs.build.result }}" == "success" ]; then
+          echo "✅ Pipeline réussie!"
+          echo "🎉 Application prête en production"
+        else
+          echo "❌ Pipeline échouée!"
+          echo "🔍 Vérifiez les logs pour plus de détails"
+        fi
