@@ -21,17 +21,31 @@ jobs:
           --health-retries=5
 
     steps:
+      # Récupération du code
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Installer Flyway CLI
       - name: Setup Flyway CLI
         run: |
           curl -L https://github.com/flyway/flyway/releases/download/flyway-11.12.0/flyway-commandline-11.12.0-linux-x64.tar.gz -o flyway.tar.gz
           tar -xzf flyway.tar.gz
           sudo ln -s $PWD/flyway-11.12.0/flyway /usr/local/bin/flyway
 
+      # Attendre que MySQL soit prêt
+      - name: Wait for MySQL
+        run: |
+          echo "Waiting for MySQL to be ready..."
+          for i in {1..30}; do
+            mysqladmin ping -h localhost -uroot -proot > /dev/null 2>&1 && break
+            echo "MySQL not ready yet, sleeping..."
+            sleep 2
+          done
+
+      # Vérifier Flyway
       - name: Flyway version
         run: flyway -v
 
+      # Lancer les migrations
       - name: Run Flyway migrations
         run: flyway -url=jdbc:mysql://localhost:3306/poc_liq -user=root -password=root -locations=filesystem:./sql migrate
