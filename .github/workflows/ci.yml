@@ -21,21 +21,17 @@ jobs:
           --health-retries=5
 
     steps:
-      # Récupération du code
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Installer Flyway CLI (version récente)
       - name: Setup Flyway CLI
         run: |
-          curl -L https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.12.0/flyway-commandline-11.12.0-linux-x64.tar.gz -o flyway.tar.gz
+          curl -L https://github.com/flyway/flyway/releases/download/flyway-11.12.0/flyway-commandline-11.12.0-linux-x64.tar.gz -o flyway.tar.gz
           tar -xzf flyway.tar.gz
           sudo ln -s $PWD/flyway-11.12.0/flyway /usr/local/bin/flyway
 
-      # Vérifier Flyway
       - name: Flyway version
         run: flyway -v
 
-      # Lancer les migrations
       - name: Run Flyway migrations
         run: flyway -url=jdbc:mysql://localhost:3306/poc_liq -user=root -password=root -locations=filesystem:./sql migrate
